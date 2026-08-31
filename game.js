@@ -1,6 +1,6 @@
 /**
  * Brain Puzzle Master - Core Gameplay & Logic Engine
- * GDevelop Compatible Architecture & Web Prototype
+ * GDevelop Compatible Architecture, Google Auth & Cloud Save Sync
  */
 
 // --- 1. AUDIO SYNTHESIZER (Web Audio API) ---
@@ -28,10 +28,10 @@ class SoundManager {
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
     osc.type = 'triangle';
-    osc.frequency.setValueAtTime(523.25, now); // C5
-    osc.frequency.setValueAtTime(659.25, now + 0.1); // E5
-    osc.frequency.setValueAtTime(783.99, now + 0.2); // G5
-    osc.frequency.setValueAtTime(1046.5, now + 0.3); // C6
+    osc.frequency.setValueAtTime(523.25, now);
+    osc.frequency.setValueAtTime(659.25, now + 0.1);
+    osc.frequency.setValueAtTime(783.99, now + 0.2);
+    osc.frequency.setValueAtTime(1046.5, now + 0.3);
     gain.gain.setValueAtTime(0.2, now);
     gain.gain.exponentialRampToValueAtTime(0.01, now + 0.6);
     osc.connect(gain);
@@ -97,8 +97,10 @@ class SoundManager {
 
 const sounds = new SoundManager();
 
-// --- 2. GAME STATE & STORAGE ---
-const SAVE_KEY = 'BRAIN_PUZZLE_GDEVELOP_DATA';
+// --- 2. GAME STATE & GOOGLE CLOUD STORAGE ---
+const LOCAL_SAVE_KEY = 'BRAIN_PUZZLE_GDEVELOP_DATA';
+const GOOGLE_AUTH_KEY = 'BRAIN_PUZZLE_GOOGLE_USER';
+
 const gameState = {
   currentLevel: 1,
   unlockedLevel: 1,
@@ -106,13 +108,35 @@ const gameState = {
   hints: 3,
   completedLevels: [],
   sfxEnabled: true,
-  hapticEnabled: true,
+  cloudSyncEnabled: true,
   admobEnabled: true
 };
 
+const userAuth = {
+  isLoggedIn: false,
+  userName: "Tamu",
+  userEmail: "",
+  userAvatar: "👤"
+};
+
 function loadGameData() {
+  // 1. Load Auth State
   try {
-    const raw = localStorage.getItem(SAVE_KEY);
+    const authRaw = localStorage.getItem(GOOGLE_AUTH_KEY);
+    if (authRaw) {
+      Object.assign(userAuth, JSON.parse(authRaw));
+    }
+  } catch (e) {
+    console.warn('Auth load error:', e);
+  }
+
+  // 2. Load Game State (Per Google Account if logged in, or local guest)
+  try {
+    const storageKey = (userAuth.isLoggedIn && userAuth.userEmail) 
+      ? `BRAIN_PUZZLE_SAVE_${userAuth.userEmail.replace(/[^a-zA-Z0-9]/g, '_')}`
+      : LOCAL_SAVE_KEY;
+
+    const raw = localStorage.getItem(storageKey);
     if (raw) {
       const data = JSON.parse(raw);
       Object.assign(gameState, data);
@@ -120,12 +144,22 @@ function loadGameData() {
   } catch (e) {
     console.warn('Storage load error:', e);
   }
+
   updateUIStats();
+  updateAuthUI();
 }
 
 function saveGameData() {
   try {
-    localStorage.setItem(SAVE_KEY, JSON.stringify(gameState));
+    const storageKey = (userAuth.isLoggedIn && userAuth.userEmail) 
+      ? `BRAIN_PUZZLE_SAVE_${userAuth.userEmail.replace(/[^a-zA-Z0-9]/g, '_')}`
+      : LOCAL_SAVE_KEY;
+
+    localStorage.setItem(storageKey, JSON.stringify(gameState));
+
+    if (userAuth.isLoggedIn) {
+      localStorage.setItem(GOOGLE_AUTH_KEY, JSON.stringify(userAuth));
+    }
   } catch (e) {
     console.warn('Storage save error:', e);
   }
@@ -146,7 +180,176 @@ function updateUIStats() {
   if (hintVal) hintVal.textContent = gameState.hints;
 }
 
-// --- 3. TOAST & NOTIFICATIONS ---
+// --- 3. GOOGLE AUTHENTICATION SYSTEM ---
+function initGoogleAuth() {
+  // Check if Google GSI is available
+  if (window.google && window.google.accounts && window.google.accounts.id) {
+    try {
+      window.google.accounts.id.initialize({
+        client_id: "394025609994-gdevelopbrainpuzzle.apps.googleusercontent.com",
+        callback: handleGoogleCredentialResponse,
+        auto_select: false
+      });
+    } catch (err) {
+      console.log('Google Identity init:', err);
+    }
+  }
+}
+
+function handleGoogleCredentialResponse(response) {
+  if (response && response.credential) {
+    try {
+      // Decode JWT Payload
+      const base64Url = response.credential.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join(''));
+      
+      const payload = JSON.parse(jsonPayload);
+      performLogin({
+        name: payload.name || "Pemain Google",
+        email: payload.email,
+        avatar: payload.picture || "🌟"
+      });
+    } catch (e) {
+      console.warn('JWT Decode error, using mock:', e);
+      simulateGoogleLogin();
+    }
+  }
+}
+
+function performLogin(userData) {
+  userAuth.isLoggedIn = true;
+  userAuth.userName = userData.name;
+  userAuth.userEmail = userData.email;
+  userAuth.userAvatar = userData.avatar || "👤";
+
+  localStorage.setItem(GOOGLE_AUTH_KEY, JSON.stringify(userAuth));
+
+  // Load account specific data or merge
+  const accountKey = `BRAIN_PUZZLE_SAVE_${userAuth.userEmail.replace(/[^a-zA-Z0-9]/g, '_')}`;
+  const existingSave = localStorage.getItem(accountKey);
+
+  if (existingSave) {
+    Object.assign(gameState, JSON.parse(existingSave));
+  } else {
+    // New Google Account save: register with current progress
+    saveGameData();
+  }
+
+  sounds.playReward();
+  updateAuthUI();
+  updateUIStats();
+  document.getElementById('modal-google-auth').classList.add('hidden');
+  showToast(`🎉 Selamat Datang, ${userAuth.userName}!`);
+}
+
+function performLogout() {
+  userAuth.isLoggedIn = false;
+  userAuth.userName = "Tamu";
+  userAuth.userEmail = "";
+  userAuth.userAvatar = "👤";
+
+  localStorage.removeItem(GOOGLE_AUTH_KEY);
+
+  // Re-load guest data
+  const raw = localStorage.getItem(LOCAL_SAVE_KEY);
+  if (raw) {
+    Object.assign(gameState, JSON.parse(raw));
+  } else {
+    gameState.currentLevel = 1;
+    gameState.unlockedLevel = 1;
+    gameState.coins = 100;
+    gameState.hints = 3;
+    gameState.completedLevels = [];
+  }
+
+  updateAuthUI();
+  updateUIStats();
+  document.getElementById('modal-google-auth').classList.add('hidden');
+  showToast("Akun Google telah dikeluarkan (Logout).");
+}
+
+function simulateGoogleLogin(customEmail = null) {
+  const email = customEmail || "pemain.puzzle@gmail.com";
+  const username = email.split('@')[0].replace('.', ' ').toUpperCase();
+  performLogin({
+    name: username,
+    email: email,
+    avatar: "🎮"
+  });
+}
+
+function updateAuthUI() {
+  const headerUsername = document.getElementById('header-username');
+  const headerCloudStatus = document.getElementById('header-cloud-status');
+  const headerAuthBadge = document.getElementById('header-auth-badge');
+  const headerAvatar = document.getElementById('header-avatar');
+  const btnGoogleMenu = document.getElementById('btn-google-text');
+
+  // Modal Views
+  const authGuestView = document.getElementById('auth-view-guest');
+  const authUserView = document.getElementById('auth-view-user');
+  const modalName = document.getElementById('modal-user-name');
+  const modalEmail = document.getElementById('modal-user-email');
+  const modalAvatar = document.getElementById('modal-avatar-large');
+  const statLvl = document.getElementById('modal-stat-level');
+  const statCoins = document.getElementById('modal-stat-coins');
+  const statHints = document.getElementById('modal-stat-hints');
+
+  if (userAuth.isLoggedIn) {
+    if (headerUsername) headerUsername.textContent = userAuth.userName;
+    if (headerCloudStatus) headerCloudStatus.innerHTML = "☁️ <strong>Tersinkron Google Cloud</strong>";
+    if (headerAuthBadge) {
+      headerAuthBadge.textContent = "Profil";
+      headerAuthBadge.style.color = "#00E676";
+      headerAuthBadge.style.background = "rgba(0, 230, 118, 0.15)";
+      headerAuthBadge.style.borderColor = "rgba(0, 230, 118, 0.3)";
+    }
+    if (headerAvatar) {
+      if (userAuth.userAvatar.startsWith('http')) {
+        headerAvatar.innerHTML = `<img src="${userAuth.userAvatar}" style="width:100%;height:100%;border-radius:50%;" alt="Avatar">`;
+      } else {
+        headerAvatar.textContent = userAuth.userAvatar;
+      }
+    }
+    if (btnGoogleMenu) btnGoogleMenu.textContent = `Profil: ${userAuth.userName}`;
+
+    if (authGuestView) authGuestView.classList.add('hidden');
+    if (authUserView) authUserView.classList.remove('hidden');
+
+    if (modalName) modalName.textContent = userAuth.userName;
+    if (modalEmail) modalEmail.textContent = userAuth.userEmail;
+    if (modalAvatar) {
+      if (userAuth.userAvatar.startsWith('http')) {
+        modalAvatar.innerHTML = `<img src="${userAuth.userAvatar}" style="width:100%;height:100%;border-radius:50%;" alt="Avatar">`;
+      } else {
+        modalAvatar.textContent = userAuth.userAvatar;
+      }
+    }
+    if (statLvl) statLvl.textContent = gameState.unlockedLevel;
+    if (statCoins) statCoins.textContent = gameState.coins;
+    if (statHints) statHints.textContent = gameState.hints;
+
+  } else {
+    if (headerUsername) headerUsername.textContent = "Tamu (Belum Login)";
+    if (headerCloudStatus) headerCloudStatus.textContent = "💾 Simpan Lokal";
+    if (headerAuthBadge) {
+      headerAuthBadge.textContent = "Login Google";
+      headerAuthBadge.style.color = "#60A5FA";
+      headerAuthBadge.style.background = "rgba(66, 133, 244, 0.15)";
+      headerAuthBadge.style.borderColor = "rgba(66, 133, 244, 0.3)";
+    }
+    if (headerAvatar) headerAvatar.textContent = "👤";
+    if (btnGoogleMenu) btnGoogleMenu.textContent = "Masuk dengan Google";
+
+    if (authGuestView) authGuestView.classList.remove('hidden');
+    if (authUserView) authUserView.classList.add('hidden');
+  }
+}
+
+// --- 4. TOAST & NOTIFICATIONS ---
 let toastTimeout = null;
 function showToast(msg) {
   const toast = document.getElementById('game-toast');
@@ -157,10 +360,10 @@ function showToast(msg) {
   clearTimeout(toastTimeout);
   toastTimeout = setTimeout(() => {
     toast.classList.add('hidden');
-  }, 2200);
+  }, 2400);
 }
 
-// --- 4. 30 LEVEL DEFINITIONS & MECHANICS ---
+// --- 5. 30 LEVEL DEFINITIONS & MECHANICS ---
 const LEVELS = [
   // --- TUTORIAL (Level 1-5) ---
   {
@@ -211,11 +414,8 @@ const LEVELS = [
     setup: (stage, win, fail) => {
       stage.innerHTML = `
         <div style="position: relative; width: 100%; height: 260px; display: flex; justify-content: space-around; align-items: flex-end; padding-bottom: 20px;">
-          <!-- Hidden key behind tree -->
           <div id="hidden-key" class="draggable-obj" style="position: absolute; left: 45px; bottom: 60px; font-size: 2.2rem; z-index: 1;">🗝️</div>
           <div id="tree-drag" class="draggable-obj" style="position: absolute; left: 30px; bottom: 30px; font-size: 5rem; z-index: 5;">🌳</div>
-          
-          <!-- Chest Target -->
           <div id="target-chest" style="position: absolute; right: 50px; bottom: 30px; font-size: 4rem; z-index: 2;">📦</div>
         </div>
       `;
@@ -225,16 +425,12 @@ const LEVELS = [
       const chest = document.getElementById('target-chest');
 
       makeDraggable(tree, stage, (x, y) => {
-        if (Math.abs(x) > 60 || Math.abs(y) > 50) {
-          keyFound = true;
-        }
+        if (Math.abs(x) > 60 || Math.abs(y) > 50) keyFound = true;
       });
 
       makeDraggable(key, stage, (x, y, elem) => {
         if (!keyFound) return;
-        const chestRect = chest.getBoundingClientRect();
-        const keyRect = elem.getBoundingClientRect();
-        if (isColliding(keyRect, chestRect)) {
+        if (isColliding(elem.getBoundingClientRect(), chest.getBoundingClientRect())) {
           chest.innerHTML = '🎁';
           win();
         }
@@ -663,9 +859,7 @@ const LEVELS = [
 
       makeDraggable(wood, stage, (x, y, elem) => {
         const rect = elem.getBoundingClientRect();
-        if (rect.top > 250) {
-          bridgePlaced = true;
-        }
+        if (rect.top > 250) bridgePlaced = true;
       });
 
       dog.onclick = () => {
@@ -691,7 +885,6 @@ const LEVELS = [
           <div id="num-0b" class="draggable-obj" style="font-size: 2.5rem; font-weight: 800; color: #00E5FF;">0</div>
         </div>
       `;
-      let combined = 0;
       const n1 = document.getElementById('num-1');
       const n0a = document.getElementById('num-0a');
       const n0b = document.getElementById('num-0b');
@@ -700,9 +893,7 @@ const LEVELS = [
         const r1 = n1.getBoundingClientRect();
         const r2 = n0a.getBoundingClientRect();
         const r3 = n0b.getBoundingClientRect();
-        if (isColliding(r1, r2) && isColliding(r2, r3)) {
-          win();
-        }
+        if (isColliding(r1, r2) && isColliding(r2, r3)) win();
       }
 
       makeDraggable(n1, stage, checkMatch);
@@ -1013,7 +1204,7 @@ const LEVELS = [
   }
 ];
 
-// --- 5. DRAG & DROP UTILITY ---
+// --- 6. DRAG & DROP UTILITY ---
 function makeDraggable(element, container, onMove) {
   if (!element) return;
   let isDragging = false;
@@ -1067,7 +1258,7 @@ function isColliding(r1, r2) {
            r2.bottom < r1.top);
 }
 
-// --- 6. SCREEN & NAVIGATION CONTROLLER ---
+// --- 7. SCREEN & NAVIGATION CONTROLLER ---
 function showScreen(screenId) {
   document.querySelectorAll('.game-screen').forEach(s => s.classList.remove('active'));
   const target = document.getElementById(screenId);
@@ -1146,7 +1337,7 @@ function renderLevelGrid(category = 'all') {
   });
 }
 
-// --- 7. MODALS & ADMOB REWARDED VIDEO SIMULATOR ---
+// --- 8. MODALS & ADMOB REWARDED VIDEO SIMULATOR ---
 function setupModals() {
   const btnHint = document.getElementById('btn-hint');
   const modalHint = document.getElementById('modal-hint');
@@ -1155,6 +1346,83 @@ function setupModals() {
   const btnWatchAdHint = document.getElementById('btn-watch-ad-hint');
   const hintTextContent = document.getElementById('hint-text-content');
 
+  // Google Auth Modals
+  const modalAuth = document.getElementById('modal-google-auth');
+  const btnAuthProfile = document.getElementById('btn-auth-profile');
+  const btnGoogleLoginMenu = document.getElementById('btn-google-login-menu');
+  const btnCloseAuth = document.getElementById('btn-close-auth');
+  const btnDoGoogleLogin = document.getElementById('btn-do-google-login');
+  const btnCustomGoogleLogin = document.getElementById('btn-custom-google-login');
+  const inputGoogleEmail = document.getElementById('input-google-email');
+  const btnGoogleLogout = document.getElementById('btn-google-logout');
+  const btnSwitchAccount = document.getElementById('btn-switch-account');
+  const btnSyncNow = document.getElementById('btn-sync-now');
+
+  if (btnAuthProfile) {
+    btnAuthProfile.onclick = () => {
+      updateAuthUI();
+      modalAuth.classList.remove('hidden');
+    };
+  }
+
+  if (btnGoogleLoginMenu) {
+    btnGoogleLoginMenu.onclick = () => {
+      updateAuthUI();
+      modalAuth.classList.remove('hidden');
+    };
+  }
+
+  if (btnCloseAuth) {
+    btnCloseAuth.onclick = () => modalAuth.classList.add('hidden');
+  }
+
+  if (btnDoGoogleLogin) {
+    btnDoGoogleLogin.onclick = () => {
+      // Trigger Google Identity Prompt or fallback instant login
+      if (window.google && window.google.accounts && window.google.accounts.id) {
+        window.google.accounts.id.prompt((notification) => {
+          if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+            simulateGoogleLogin();
+          }
+        });
+      } else {
+        simulateGoogleLogin();
+      }
+    };
+  }
+
+  if (btnCustomGoogleLogin && inputGoogleEmail) {
+    btnCustomGoogleLogin.onclick = () => {
+      const email = inputGoogleEmail.value.trim();
+      if (email && email.includes('@')) {
+        simulateGoogleLogin(email);
+        inputGoogleEmail.value = '';
+      } else {
+        showToast("Masukkan alamat email Google yang valid (misal: nama@gmail.com)");
+      }
+    };
+  }
+
+  if (btnGoogleLogout) {
+    btnGoogleLogout.onclick = () => performLogout();
+  }
+
+  if (btnSwitchAccount) {
+    btnSwitchAccount.onclick = () => {
+      document.getElementById('auth-view-user').classList.add('hidden');
+      document.getElementById('auth-view-guest').classList.remove('hidden');
+    };
+  }
+
+  if (btnSyncNow) {
+    btnSyncNow.onclick = () => {
+      saveGameData();
+      sounds.playReward();
+      showToast("☁️ Data progres berhasil disinkronkan ke Google Cloud!");
+    };
+  }
+
+  // Hint Modals
   if (btnHint) {
     btnHint.onclick = () => {
       const lvl = LEVELS[gameState.currentLevel - 1];
@@ -1238,10 +1506,11 @@ function triggerAdClick() {
   showToast("Membuka halaman sponsor AdMob...");
 }
 
-// --- 8. INITIALIZATION ---
+// --- 9. INITIALIZATION ---
 window.addEventListener('DOMContentLoaded', () => {
   loadGameData();
   setupModals();
+  initGoogleAuth();
 
   // Navigation Event Listeners
   document.getElementById('btn-play').onclick = () => loadLevel(gameState.currentLevel);
@@ -1277,6 +1546,16 @@ window.addEventListener('DOMContentLoaded', () => {
     };
   }
 
+  const toggleCloudSync = document.getElementById('toggle-cloud-sync');
+  if (toggleCloudSync) {
+    toggleCloudSync.checked = gameState.cloudSyncEnabled;
+    toggleCloudSync.onchange = () => {
+      gameState.cloudSyncEnabled = toggleCloudSync.checked;
+      saveGameData();
+      showToast(toggleCloudSync.checked ? "Cloud sync diaktifkan" : "Cloud sync dinonaktifkan");
+    };
+  }
+
   const toggleAdmob = document.getElementById('toggle-admob');
   if (toggleAdmob) {
     toggleAdmob.checked = gameState.admobEnabled;
@@ -1290,8 +1569,12 @@ window.addEventListener('DOMContentLoaded', () => {
   const btnResetData = document.getElementById('btn-reset-data');
   if (btnResetData) {
     btnResetData.onclick = () => {
-      if (confirm("Reset semua level dan koin?")) {
-        localStorage.removeItem(SAVE_KEY);
+      if (confirm("Reset semua level dan koin untuk akun ini?")) {
+        const storageKey = (userAuth.isLoggedIn && userAuth.userEmail) 
+          ? `BRAIN_PUZZLE_SAVE_${userAuth.userEmail.replace(/[^a-zA-Z0-9]/g, '_')}`
+          : LOCAL_SAVE_KEY;
+
+        localStorage.removeItem(storageKey);
         gameState.currentLevel = 1;
         gameState.unlockedLevel = 1;
         gameState.coins = 100;

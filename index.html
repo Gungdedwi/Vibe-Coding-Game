@@ -4,17 +4,32 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Brain Puzzle Master - Out of the Box Logic Game</title>
-  <meta name="description" content="Game teka-teki logika interaktif brain puzzle dengan mekanik unik, sistem level bertingkat, dan hint system cerdas.">
+  <meta name="description" content="Game teka-teki logika interaktif brain puzzle dengan autentikasi Google, level bertingkat, dan cloud save.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=Plus+Jakarta+Sans:wght@500;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+  <!-- Google Identity Services SDK -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
   <div id="app-container">
     
     <!-- Screen: Main Menu -->
     <section id="screen-main-menu" class="game-screen active">
+      
+      <!-- Top Profile & Auth Bar -->
+      <div class="user-auth-header">
+        <button id="btn-auth-profile" class="profile-pill glass-card">
+          <div class="profile-avatar" id="header-avatar">👤</div>
+          <div class="profile-info">
+            <span class="user-name" id="header-username">Tamu (Belum Login)</span>
+            <span class="cloud-status" id="header-cloud-status">💾 Simpan Lokal</span>
+          </div>
+          <span class="auth-action-tag" id="header-auth-badge">Login Google</span>
+        </button>
+      </div>
+
       <div class="header-logo">
         <div class="logo-badge">
           <img src="assets/images/brain_icon.svg" alt="Brain Icon" class="pulse-icon">
@@ -29,6 +44,10 @@
         </button>
         <button id="btn-levels" class="btn btn-secondary">
           <span class="btn-icon">☰</span> PILIH LEVEL
+        </button>
+        <button id="btn-google-login-menu" class="btn btn-google">
+          <img src="assets/images/google_icon.svg" alt="Google" class="google-btn-icon">
+          <span id="btn-google-text">Masuk dengan Google</span>
         </button>
         <button id="btn-settings" class="btn btn-tertiary">
           <span class="btn-icon">⚙</span> PENGATURAN
@@ -98,7 +117,7 @@
         <!-- Interactive puzzle items rendered here dynamically -->
       </main>
 
-      <!-- Optional Timer / Status -->
+      <!-- Optional Status -->
       <div id="puzzle-status-bar" class="status-bar hidden">
         <div id="timer-progress" class="timer-bar"></div>
       </div>
@@ -109,10 +128,87 @@
       <div class="ad-badge">AdMob Banner</div>
       <div class="ad-content">
         <span class="ad-sponsor">Sponsor:</span>
-        <span class="ad-text">Mainkan Game Asah Otak Terbaik &amp; Tingkatkan IQ Anda!</span>
+        <span class="ad-text">Asah Logika &amp; Sinkronkan Progres Game dengan Akun Google!</span>
         <button class="ad-cta-btn" onclick="triggerAdClick()">Install</button>
       </div>
     </footer>
+
+    <!-- Modal: Google Auth & Profile Dialog -->
+    <div id="modal-google-auth" class="modal-backdrop hidden">
+      <div class="modal-card glass-card pop-anim auth-modal">
+        
+        <!-- When Logged Out: Sign In Form -->
+        <div id="auth-view-guest" class="auth-view">
+          <div class="modal-header">
+            <img src="assets/images/google_icon.svg" alt="Google" class="modal-icon">
+            <h3>Akun Google</h3>
+            <p class="modal-subtitle">Daftar atau Masuk dengan Akun Google Anda untuk menyimpan progres ke cloud.</p>
+          </div>
+
+          <div class="auth-form-body">
+            <div class="auth-benefits">
+              <div class="benefit-item">☁️ Simpan otomatis progres level</div>
+              <div class="benefit-item">💎 Amankan koin &amp; hint Anda</div>
+              <div class="benefit-item">📱 Mainkan di berbagai perangkat</div>
+            </div>
+
+            <!-- Instant One-Click Google Login -->
+            <button id="btn-do-google-login" class="btn btn-google btn-full glow-effect">
+              <img src="assets/images/google_icon.svg" alt="Google" class="google-btn-icon">
+              <span>Masuk dengan Google</span>
+            </button>
+
+            <!-- Custom Email / Manual Google Mock -->
+            <div class="auth-divider"><span>atau masukkan akun Google</span></div>
+            <div class="custom-input-group">
+              <input type="email" id="input-google-email" placeholder="nama@gmail.com" class="text-input">
+              <button id="btn-custom-google-login" class="btn btn-primary btn-sm">Daftar / Masuk</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- When Logged In: Profile & Cloud Sync View -->
+        <div id="auth-view-user" class="auth-view hidden">
+          <div class="profile-card-large">
+            <div class="avatar-large" id="modal-avatar-large">👤</div>
+            <h3 id="modal-user-name">Gungde Dwi</h3>
+            <span id="modal-user-email" class="email-sub">gungdedwi@gmail.com</span>
+            <div class="sync-badge">
+              <span class="dot-green"></span> Terhubung ke Google Cloud
+            </div>
+          </div>
+
+          <div class="stats-overview">
+            <div class="overview-box">
+              <span class="box-label">Level Terbuka</span>
+              <strong id="modal-stat-level" class="box-val">1</strong>
+            </div>
+            <div class="overview-box">
+              <span class="box-label">Koin</span>
+              <strong id="modal-stat-coins" class="box-val">100</strong>
+            </div>
+            <div class="overview-box">
+              <span class="box-label">Hint</span>
+              <strong id="modal-stat-hints" class="box-val">3</strong>
+            </div>
+          </div>
+
+          <div class="modal-actions">
+            <button id="btn-sync-now" class="btn btn-primary">
+              🔄 Sinkronkan Cloud Sekarang
+            </button>
+            <button id="btn-switch-account" class="btn btn-secondary">
+              Ganti Akun Google
+            </button>
+            <button id="btn-google-logout" class="btn btn-danger-outline">
+              Keluar (Logout)
+            </button>
+          </div>
+        </div>
+
+        <button id="btn-close-auth" class="btn-close-x" title="Tutup">✕</button>
+      </div>
+    </div>
 
     <!-- Modal: Hint Dialog -->
     <div id="modal-hint" class="modal-backdrop hidden">
@@ -194,9 +290,9 @@
             </label>
           </div>
           <div class="setting-item">
-            <span>Getaran (Haptic)</span>
+            <span>Google Cloud Sync</span>
             <label class="switch">
-              <input type="checkbox" id="toggle-haptic" checked>
+              <input type="checkbox" id="toggle-cloud-sync" checked>
               <span class="slider"></span>
             </label>
           </div>
@@ -218,9 +314,9 @@
       </div>
     </div>
 
-    <!-- Toast Notification for Incorrect / Tips -->
+    <!-- Toast Notification -->
     <div id="game-toast" class="game-toast hidden">
-      <span id="toast-message">Oops! Coba pikirkan di luar nalar!</span>
+      <span id="toast-message">Notifikasi</span>
     </div>
 
   </div>

@@ -1,6 +1,6 @@
-# 📘 Panduan Teknis GDevelop & Ekspor Android
+# 📘 Panduan Teknis GDevelop, Google Auth & Ekspor Android
 
-Panduan ini menjelaskan cara membuka, mengonfigurasi AdMob, dan mengekspor game **Brain Puzzle Master** ke format Android (APK/AAB).
+Panduan ini menjelaskan cara membuka, mengonfigurasi autentikasi Google, AdMob, dan mengekspor game **Brain Puzzle Master** ke format Android (APK/AAB).
 
 ---
 
@@ -12,64 +12,62 @@ Panduan ini menjelaskan cara membuka, mengonfigurasi AdMob, dan mengekspor game 
 
 ---
 
-## 2. Struktur Scene & Variabel
-- **Scene `MainMenu`:** Tampilan judul, tombol Play, tombol Level Select, dan ringkasan koin/hint.
-- **Scene `Gameplay`:** Tempat teka-teki logika interaktif dimainkan dengan perilaku *Draggable*, deteksi tabrakan (*Collision*), dan dialog kemenangan.
+## 2. Struktur Scene & Variabel Akun
+- **Scene `MainMenu`:** Tampilan judul, tombol Play, Level Select, Tombol Akun Google, dan bar profil.
+- **Scene `Gameplay`:** Tempat teka-teki logika interaktif dimainkan.
 - **Variabel Global:**
+  - `IsLoggedIn` (Boolean): Status apakah user sedang login akun Google (`true`/`false`).
+  - `UserName` (String): Nama lengkap pengguna dari profil Google.
+  - `UserEmail` (String): Alamat email akun Google pengguna.
+  - `UserAvatar` (String): URL foto atau emoji avatar pemain.
   - `CurrentLevel` (Number): Level aktif saat ini (1–30).
   - `UnlockedLevel` (Number): Level tertinggi yang telah terbuka.
   - `Coins` (Number): Jumlah koin pemain.
   - `Hints` (Number): Jumlah petunjuk yang dimiliki pemain.
-  - `SoundEnabled` (Boolean): Status audio SFX.
 
 ---
 
-## 3. Konfigurasi Google AdMob
-Untuk menampilkan iklan nyata pada game Android:
+## 3. Konfigurasi Autentikasi Akun Google (Google Sign-In)
 
+### Untuk Versi Web / HTML5:
+Game sudah terintegrasi dengan SDK resmi **Google Identity Services (GSI)** pada `index.html` dan `game.js`.
+- Ganti Client ID pada `game.js` di fungsi `initGoogleAuth()` dengan Client ID OAuth 2.0 milik Anda dari [Google Cloud Console](https://console.cloud.google.com/apis/credentials).
+- Game juga menyediakan *Instant Login Mode* untuk kemudahan testing offline/lokal.
+
+### Untuk Versi Android di GDevelop:
+1. Pasang ekstensi **Firebase Authentication** atau **Google Play Games Services** melalui menu *Project Manager ➔ Functions/Extensions ➔ Search New Extensions*.
+2. Pada Event Sheet saat objek `BtnGoogleLogin` ditekan:
+   - Tambahkan aksi `Firebase Authentication: Sign in with Google` atau `Google Play Games: Sign in`.
+   - Pada sub-event *Success*:
+     - Set variable `IsLoggedIn = true`
+     - Set variable `UserName = FirebaseAuth::UserDisplayName()`
+     - Set variable `UserEmail = FirebaseAuth::UserEmail()`
+     - Muat data simpanan cloud user (`Storage::Read` dengan key email user).
+
+---
+
+## 4. Konfigurasi Google AdMob
 1. **Buka Project Properties di GDevelop:**
-   - Klik menu *Game settings* ➔ *Properties*.
-   - Masukkan **AdMob App ID** Anda pada kolom yang tersedia (misal: `ca-app-pub-XXXXXXXXXXXXXXXX~XXXXXXXXXX`).
-
+   - Masukkan **AdMob App ID** Anda (misal: `ca-app-pub-XXXXXXXXXXXXXXXX~XXXXXXXXXX`).
 2. **Atur Ad Unit IDs pada Event Sheet:**
-   - **Banner Ad:** Panggil action `AdMob::ShowBanner` pada event *At the beginning of scene* di scene MainMenu.
-   - **Interstitial Ad:** Panggil action `AdMob::ShowInterstitial` saat kondisi `CurrentLevel % 3 == 0` terpenuhi setelah level selesai.
-   - **Rewarded Video Ad:** Panggil action `AdMob::ShowRewardedVideo` saat tombol *"Tonton Iklan (+1 Hint)"* ditekan. Pada sub-event `AdMob::UserEarnedReward`, tambahkan action:
-     - Ubah variabel `Hints` + 1
-     - Simpan variabel `Hints` ke penyimpanan lokal (`Storage::Write`).
-
-> **Catatan Uji Coba (Test Ads):**
-> Saat tahap pengujian di emulator/device, selalu gunakan **AdMob Test Ad Unit ID** resmi dari Google agar akun AdMob Anda tidak terkena sanksi *invalid traffic*.
+   - **Banner Ad:** Panggil `AdMob::ShowBanner` pada event *At the beginning of scene*.
+   - **Interstitial Ad:** Panggil `AdMob::ShowInterstitial` setiap 3 level.
+   - **Rewarded Video Ad:** Panggil `AdMob::ShowRewardedVideo` pada tombol *"Tonton Iklan (+1 Hint)"*.
 
 ---
 
-## 4. Ekspor ke Android (APK / AAB)
+## 5. Ekspor ke Android (APK / AAB)
 
 ### Metode 1: GDevelop Cloud Build (Paling Mudah)
 1. Di GDevelop, klik tombol **Publish / Export** di toolbar atas kanan.
 2. Pilih tab **Android & iOS**.
 3. Pilih opsi **Android (APK & Google Play Bundle .AAB)**.
 4. Klik **Package for Android**.
-5. GDevelop Cloud Build akan memproses build secara otomatis. Setelah selesai, Anda akan menerima link download file `.apk` (untuk testing mandiri) dan `.aab` (untuk publikasi ke Google Play Store).
+5. GDevelop Cloud Build akan memproses build secara otomatis. Anda akan menerima link download file `.apk` dan `.aab`.
 
 ### Metode 2: Ekspor Manual via Cordova / Capacitor
-1. Di menu Publish, pilih **Manual build** ➔ **Cordova (iOS & Android)**.
-2. Ekspor ke folder lokal di komputer Anda.
-3. Jalankan perintah di terminal:
-   ```bash
-   npm install -g cordova
-   cordova platform add android
-   cordova build android --release
-   ```
-
----
-
-## 5. Menambahkan Level Baru di GDevelop
-Untuk menambahkan level teka-teki baru:
-1. Duplikasi template event level pada Event Sheet `Gameplay`.
-2. Tentukan objek yang dapat digeser (*Draggable behavior*).
-3. Buat kondisi target (misal: `Collision between Key and Chest` atau `Distance between Cloud and Fire < 50`).
-4. Pada blok aksi benar (*Actions*):
-   - Bunyikan suara kemenangan.
-   - Tambahkan nilai variabel `UnlockedLevel` jika level baru lebih tinggi.
-   - Tampilkan popup sukses dan simpan progres via *Storage Action*.
+```bash
+npm install -g cordova
+cordova platform add android
+cordova build android --release
+```
