@@ -1,54 +1,59 @@
-# 🧩 Brain Puzzle Master (GDevelop Engine)
+# 📜 PROCEDURE QUEST
+> *"Learn the Steps. Master the Procedure."*
 
-Game teka-teki logika interaktif (*Brain Puzzle*) bergaya *out-of-the-box* yang dikembangkan menggunakan **GDevelop** dan dilengkapi dengan *Playable Web Engine*, **Autentikasi Akun Google**, dan **Cloud Save Sync**.
-
----
-
-## 📱 Fitur Utama
-1. **Autentikasi Akun Google (Google Sign-In & Registration):**
-   - Registrasi dan Login mudah menggunakan akun Google.
-   - Header profil dinamis (Avatar, Nama Akun, Email, Status Sinkronisasi).
-   - **Google Cloud Save Sync:** Progres permainan (level terbuka, koin, hint) disimpan aman berdasarkan akun Google pemain dan dapat disinkronkan di perangkat lain.
-2. **30 Level Teka-Teki Logika Unik:**
-   - **Level 1–5 (Tutorial):** Pengenalan mekanik dasar (*tap*, *drag & drop*).
-   - **Level 6–15 (Medium):** Jebakan visual & *lateral thinking*.
-   - **Level 16–30 (Advanced):** Manipulasi multi-objek, timer darurat, kombinasi elemen, dan kuis kreatif.
-3. **Sistem Hint & Reward:**
-   - Pemain dapat menggunakan Hint untuk petunjuk solusi.
-   - Nonton iklan video berhadiah (*AdMob Rewarded Video*) untuk mendapatkan +1 Hint & +50 Koin gratis.
-4. **Monetisasi AdMob:**
-   - Banner Ad di menu utama dan level selector.
-   - Interstitial Ad setiap kelipatan 3 level.
-   - Rewarded Video Ad untuk petunjuk gratis.
+**Media Pembelajaran Online Interaktif Berbasis Game untuk Mata Pelajaran Bahasa Indonesia Kelas IX SMP (Topik: Teks Prosedur)**
 
 ---
 
-## 📂 Struktur Proyek
-```text
-.
-├── game.json              # File Proyek Resmi GDevelop 5 (mendukung Google Auth & AdMob)
-├── index.html             # Playable Web Engine / Web Preview
-├── style.css              # Styling Modern Glassmorphism & Google Auth UI
-├── game.js                # Logika 30 Level, Google Identity Auth & Audio Synth
-├── assets/
-│   └── images/            # Aset Vektor SVG (Google, Brain, Bulb, Coin, Key)
-├── issue.md               # Spesifikasi Fitur Awal
-├── GD_GUIDE.md            # Panduan Membuka di GDevelop, Google Auth & Ekspor ke Android
-└── README.md              # Dokumentasi Utama
-```
+## 🎯 Identitas Pembelajaran
+* **Mata Pelajaran**: Bahasa Indonesia
+* **Kelas / Fase**: IX SMP / Fase D
+* **Materi Utama**: Teks Prosedur
+* **Guru Pengampu**: **Bahaudin Alfiansyah Syafi'i, S.Pd.**
+* **NIPPPK**: **199702042025211039**
 
 ---
 
-## 🎮 Cara Menjalankan & Memainkan
+## 🚀 Fitur Utama & Sistem Game
 
-### 1. Mainkan Langsung di Web Browser
-Buka file `index.html` langsung di browser atau jalankan via live server lokal:
+### 1. Mobile-First & Gamified UX
+* Dirancang khusus untuk smartphone siswa (touch-friendly, tombol besar, drag/touch ordering).
+* **Audio Synthesizer (Web Audio API)**: Efek suara gamifikasi bawaan tanpa perlu unduhan file eksternal.
+* **Sistem Level & Progression**:
+  * Level 1: Procedure Rookie
+  * Level 2: Step Explorer
+  * Level 3: Procedure Analyst
+  * Level 4: Procedure Expert
+  * Level 5: Procedure Master
+* **Sistem Trophy & Badges**: 7 lencana penghargaan unik.
+* **Sistem Nyawa (❤️❤️❤️)** pada Game Word Hunter dengan opsi coba lagi.
+
+### 2. Modul Pembelajaran Interaktif (4 Modul)
+1. **Materi 1: Apa Itu Teks Prosedur?** (Konsep, tujuan komunikatif, 4 karakteristik kunci, komparasi contoh nyata vs narasi).
+2. **Materi 2: Struktur Teks Prosedur** (Diagram visual alur 4 pilar: Tujuan $\rightarrow$ Alat & Bahan $\rightarrow$ Langkah $\rightarrow$ Penutup).
+3. **Materi 3: Ciri Kebahasaan** (Imperatif, verba material, konjungsi temporal, numeralia, keterangan, dan komparasi ❌ Salah vs ✅ Benar).
+4. **Materi 4: Laboratorium Analisis Interaktif** (Pembaca teks interaktif dengan mode interactive highlighting).
+
+### 3. Mini Games Edukatif (4 Game Playable)
+1. **🧩 Step Sorter**: Menyusun langkah-langkah acak secara kronologis logis (lengkap dengan hint & penjelasan).
+2. **🕵️‍♂️ Procedure Detective**: Menemukan cacat/kesalahan logika, takaran, dan bahasa dalam dokumen SOP.
+3. **🎯 Word Hunter**: Menangkap jenis kata imperatif, konjungsi temporal, dan takaran bilangan dengan sistem 3 nyawa.
+4. **⚔️ Boss Battle (Dr. Chaos)**: Pertarungan taktis 5 fase mengalahkan raja kekacauan prosedur dengan menyusun prosedur pengoperasian APAR.
+
+### 4. Kuis Evaluasi (20 Soal HOTS)
+* 20 soal variatif tingkat kognitif Kelas IX SMP dilengkapi kunci jawaban dan pembahasan komprehensif.
+
+### 5. Hasil Belajar & Teacher Mode
+* Rekapitulasi nilai, akurasi jawaban, total XP, dan gelar kelulusan.
+* **Cetak Sertifikat / Simpan PDF** hasil belajar.
+* **Teacher Mode**: Panel informasi kurikulum dan reset data.
+
+---
+
+## 💻 Cara Menjalankan
+Cukup buka file `index.html` langsung di browser HP atau komputer, atau gunakan live server:
 ```bash
-python3 -m http.server 8080
+# Jalankan menggunakan browser favorit atau server lokal
+npx serve .
+# atau buka index.html secara langsung
 ```
-Lalu buka `http://localhost:8080` pada browser.
-
-### 2. Membuka di GDevelop 5
-1. Unduh dan buka aplikasi **[GDevelop 5](https://gdevelop.io/)**.
-2. Klik **Open a project** lalu pilih file [`game.json`](./game.json).
-3. Anda dapat melihat Scene `MainMenu` dan `Gameplay`, menguji tombol Google Login, dan mengekspor game ke Android.

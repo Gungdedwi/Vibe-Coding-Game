@@ -1,326 +1,524 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Brain Puzzle Master - Out of the Box Logic Game</title>
-  <meta name="description" content="Game teka-teki logika interaktif brain puzzle dengan autentikasi Google, level bertingkat, dan cloud save.">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=Plus+Jakarta+Sans:wght@500;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
-  <!-- Google Identity Services SDK -->
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0f172a">
+    <meta name="description" content="PROCEDURE QUEST - Media Pembelajaran Online Interaktif Berbasis Game untuk Siswa SMP Kelas IX (Materi Teks Prosedur)">
+    <title>PROCEDURE QUEST | Game Pembelajaran Teks Prosedur</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div id="app-container">
-    
-    <!-- Screen: Main Menu -->
-    <section id="screen-main-menu" class="game-screen active">
-      
-      <!-- Top Profile & Auth Bar -->
-      <div class="user-auth-header">
-        <button id="btn-auth-profile" class="profile-pill glass-card">
-          <div class="profile-avatar" id="header-avatar">👤</div>
-          <div class="profile-info">
-            <span class="user-name" id="header-username">Tamu (Belum Login)</span>
-            <span class="cloud-status" id="header-cloud-status">💾 Simpan Lokal</span>
-          </div>
-          <span class="auth-action-tag" id="header-auth-badge">Login Google</span>
-        </button>
-      </div>
+    <div id="app-container">
+        <!-- Confetti Canvas -->
+        <canvas id="confetti-canvas"></canvas>
 
-      <div class="header-logo">
-        <div class="logo-badge">
-          <img src="assets/images/brain_icon.svg" alt="Brain Icon" class="pulse-icon">
-        </div>
-        <h1 class="game-title">BRAIN <span class="gradient-text">PUZZLE</span></h1>
-        <p class="subtitle">Teka-Teki Logika Out-Of-The-Box</p>
-      </div>
+        <!-- Top Navigation Bar -->
+        <header class="top-nav">
+            <div class="top-brand" onclick="window.app.showScreen('dashboard')">
+                <span class="brand-icon">📜</span>
+                <span class="brand-title">PROCEDURE QUEST</span>
+            </div>
+            <div class="top-actions">
+                <button class="icon-btn" id="btn-sound-toggle" title="Toggle Suara" aria-label="Toggle Suara">🔊</button>
+                <button class="icon-btn" id="btn-teacher-mode" title="Teacher Mode" aria-label="Teacher Mode">👨‍🏫</button>
+            </div>
+        </header>
 
-      <div class="menu-actions">
-        <button id="btn-play" class="btn btn-primary btn-large glow-effect">
-          <span class="btn-icon">▶</span> MULAI MAIN
-        </button>
-        <button id="btn-levels" class="btn btn-secondary">
-          <span class="btn-icon">☰</span> PILIH LEVEL
-        </button>
-        <button id="btn-google-login-menu" class="btn btn-google">
-          <img src="assets/images/google_icon.svg" alt="Google" class="google-btn-icon">
-          <span id="btn-google-text">Masuk dengan Google</span>
-        </button>
-        <button id="btn-settings" class="btn btn-tertiary">
-          <span class="btn-icon">⚙</span> PENGATURAN
-        </button>
-      </div>
+        <!-- ======================================================= -->
+        <!-- SCREEN 1: HOME / HERO LANDING                           -->
+        <!-- ======================================================= -->
+        <main id="screen-home" class="screen active">
+            <div class="hero-wrapper">
+                <div class="hero-badge-pill">
+                    <span>✨</span> Bahasa Indonesia • Kelas IX SMP
+                </div>
 
-      <div class="user-stats-bar glass-card">
-        <div class="stat-pill">
-          <img src="assets/images/coin.svg" alt="Coin" class="stat-icon">
-          <span id="menu-coin-count">100</span> Koin
-        </div>
-        <div class="stat-pill">
-          <img src="assets/images/hint_bulb.svg" alt="Hint" class="stat-icon">
-          <span id="menu-hint-count">3</span> Hint
-        </div>
-      </div>
-    </section>
+                <div class="hero-art-container">
+                    <div class="hero-orb"></div>
+                    <div class="hero-art-icon">🧭</div>
+                </div>
 
-    <!-- Screen: Level Select -->
-    <section id="screen-level-select" class="game-screen">
-      <div class="top-nav">
-        <button id="btn-back-menu" class="btn-icon-only">◀</button>
-        <h2>Pilih Level</h2>
-        <div class="stat-pill compact">
-          <img src="assets/images/hint_bulb.svg" alt="Hint" class="stat-icon">
-          <span id="levelselect-hint-count">3</span>
-        </div>
-      </div>
+                <h1 class="hero-title">PROCEDURE QUEST</h1>
+                <div class="hero-tagline">"Learn the Steps. Master the Procedure."</div>
+                <p class="hero-desc">
+                    Taklukkan berbagai misi seru, perbaiki teks yang kacau, kalahkan Dr. Chaos, dan jadilah <strong>Procedure Master sejati</strong>!
+                </p>
 
-      <div class="level-categories">
-        <button class="tab-btn active" data-category="all">Semua (30)</button>
-        <button class="tab-btn" data-category="tutorial">Tutorial (1-5)</button>
-        <button class="tab-btn" data-category="medium">Medium (6-15)</button>
-        <button class="tab-btn" data-category="advanced">Hard (16-30)</button>
-      </div>
+                <!-- Student Name Input Card -->
+                <div class="student-input-card">
+                    <label for="input-student-name" class="input-label">👤 Masukkan Nama Kamu:</label>
+                    <input type="text" id="input-student-name" class="text-input" placeholder="Contoh: Raden Daniswara..." maxlength="30" autocomplete="name">
+                    <button class="btn-primary" id="btn-start-adventure">
+                        🚀 MULAI PETUALANGAN
+                    </button>
+                </div>
 
-      <div id="level-grid" class="level-grid-container custom-scroll">
-        <!-- Generated by JavaScript -->
-      </div>
-    </section>
+                <!-- Teacher Credentials Card -->
+                <div class="teacher-credential-card">
+                    <div class="teacher-avatar">👨‍🏫</div>
+                    <div class="teacher-info">
+                        <div style="font-size:0.7rem; color:#818cf8; font-weight:800; text-transform:uppercase;">Guru Pengampu:</div>
+                        <h4>Bahaudin Alfiansyah Syafi'i, S.Pd.</h4>
+                        <p>NIPPPK: 199702042025211039</p>
+                    </div>
+                </div>
+            </div>
+        </main>
 
-    <!-- Screen: Gameplay -->
-    <section id="screen-gameplay" class="game-screen">
-      <!-- Top Gameplay Bar -->
-      <header class="gameplay-header">
-        <button id="btn-pause" class="btn-icon-only" title="Kembali ke menu">◀</button>
-        <div class="level-indicator">
-          <span class="label">LEVEL</span>
-          <span id="current-level-num" class="number">1</span>
-        </div>
-        <div class="gameplay-right-stats">
-          <button id="btn-hint" class="hint-button" title="Gunakan Hint">
-            <img src="assets/images/hint_bulb.svg" alt="Hint" class="bulb-icon">
-            <span id="game-hint-count" class="hint-badge">3</span>
-          </button>
-          <button id="btn-reset" class="btn-icon-only" title="Ulangi Level">🔄</button>
-        </div>
-      </header>
-
-      <!-- Question Box -->
-      <div class="question-container glass-card">
-        <h2 id="puzzle-question">Pertanyaan Teka-Teki</h2>
-      </div>
-
-      <!-- Interactive Puzzle Playground -->
-      <main id="puzzle-stage" class="puzzle-stage-area">
-        <!-- Interactive puzzle items rendered here dynamically -->
-      </main>
-
-      <!-- Optional Status -->
-      <div id="puzzle-status-bar" class="status-bar hidden">
-        <div id="timer-progress" class="timer-bar"></div>
-      </div>
-    </section>
-
-    <!-- Banner Ad Container (Simulated AdMob Banner) -->
-    <footer id="admob-banner" class="admob-banner-container">
-      <div class="ad-badge">AdMob Banner</div>
-      <div class="ad-content">
-        <span class="ad-sponsor">Sponsor:</span>
-        <span class="ad-text">Asah Logika &amp; Sinkronkan Progres Game dengan Akun Google!</span>
-        <button class="ad-cta-btn" onclick="triggerAdClick()">Install</button>
-      </div>
-    </footer>
-
-    <!-- Modal: Google Auth & Profile Dialog -->
-    <div id="modal-google-auth" class="modal-backdrop hidden">
-      <div class="modal-card glass-card pop-anim auth-modal">
-        
-        <!-- When Logged Out: Sign In Form -->
-        <div id="auth-view-guest" class="auth-view">
-          <div class="modal-header">
-            <img src="assets/images/google_icon.svg" alt="Google" class="modal-icon">
-            <h3>Akun Google</h3>
-            <p class="modal-subtitle">Daftar atau Masuk dengan Akun Google Anda untuk menyimpan progres ke cloud.</p>
-          </div>
-
-          <div class="auth-form-body">
-            <div class="auth-benefits">
-              <div class="benefit-item">☁️ Simpan otomatis progres level</div>
-              <div class="benefit-item">💎 Amankan koin &amp; hint Anda</div>
-              <div class="benefit-item">📱 Mainkan di berbagai perangkat</div>
+        <!-- ======================================================= -->
+        <!-- SCREEN 2: STUDENT DASHBOARD                             -->
+        <!-- ======================================================= -->
+        <section id="screen-dashboard" class="screen">
+            <!-- Profile Header -->
+            <div class="student-profile-header">
+                <div class="profile-avatar-wrap">🎓</div>
+                <div class="profile-meta">
+                    <div class="student-greeting">Halo Pejuang Prosedur,</div>
+                    <div class="student-display-name bind-student-name">Siswa Pejuang</div>
+                    <div class="level-badge-tag bind-level-title">Lv.1 — Procedure Rookie</div>
+                </div>
             </div>
 
-            <!-- Instant One-Click Google Login -->
-            <button id="btn-do-google-login" class="btn btn-google btn-full glow-effect">
-              <img src="assets/images/google_icon.svg" alt="Google" class="google-btn-icon">
-              <span>Masuk dengan Google</span>
+            <!-- Stats Grid -->
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <div class="stat-icon">⚡</div>
+                    <div class="stat-value bind-xp">0 XP</div>
+                    <div class="stat-label">Total XP</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-icon">🎯</div>
+                    <div class="stat-value bind-accuracy">100%</div>
+                    <div class="stat-label">Akurasi</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-icon">🏆</div>
+                    <div class="stat-value bind-missions-count">0</div>
+                    <div class="stat-label">Misi Selesai</div>
+                </div>
+            </div>
+
+            <!-- XP Progress Bar -->
+            <div class="progress-section">
+                <div class="progress-label-row">
+                    <span style="color:#e2e8f0;">Progres Leveling</span>
+                    <span id="xp-progress-text" style="color:#a5b4fc;">0 / 300 XP</span>
+                </div>
+                <div class="xp-bar-bg">
+                    <div class="xp-bar-fill" id="xp-bar-fill" style="width: 0%;"></div>
+                </div>
+            </div>
+
+            <!-- Missions List -->
+            <div class="section-heading">
+                <span>🗺️</span> Peta Misi Pembelajaran
+            </div>
+            <div class="mission-list" id="dashboard-missions-list">
+                <!-- Dynamically rendered by JS -->
+            </div>
+
+            <!-- Badges Carousel -->
+            <div class="section-heading">
+                <span>🏅</span> Koleksi Trophy & Badges
+            </div>
+            <div class="badges-carousel" id="badges-carousel-wrap">
+                <!-- Dynamically rendered by JS -->
+            </div>
+        </section>
+
+        <!-- ======================================================= -->
+        <!-- SCREEN 3: MATERI MODULES                                -->
+        <!-- ======================================================= -->
+        <section id="screen-materi" class="screen">
+            <!-- Tabs Navigation -->
+            <div class="module-nav-tabs" id="materi-tabs-container">
+                <!-- Tabs rendered by JS -->
+            </div>
+
+            <div class="module-header">
+                <div>
+                    <h3 id="materi-title" style="color:#ffffff; margin-bottom:4px;">Modul Materi</h3>
+                    <p id="materi-summary" style="font-size:0.78rem; color:var(--text-muted);"></p>
+                </div>
+            </div>
+
+            <!-- Dynamic Content Area -->
+            <div id="materi-body-content">
+                <!-- Rendered by JS -->
+            </div>
+        </section>
+
+        <!-- ======================================================= -->
+        <!-- SCREEN 4: GAMES HUB                                     -->
+        <!-- ======================================================= -->
+        <section id="screen-games-hub" class="screen">
+            <div class="section-heading">
+                <span>🎮</span> Arena Mini Games
+            </div>
+            <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:14px;">
+                Pilih game favoritmu untuk mengasah ketajaman logika langkah dan kebahasaan teks prosedur!
+            </p>
+
+            <div class="mission-list">
+                <div class="mission-card" onclick="window.app.startStepSorter(0)">
+                    <div class="mission-icon-wrap" style="background:rgba(59,130,246,0.2);">🧩</div>
+                    <div class="mission-info">
+                        <div class="mission-title">1. Step Sorter</div>
+                        <div class="mission-desc">Susun langkah prosedur yang teracak secara berurutan</div>
+                        <div class="mission-xp-tag">⚡ +100 - 150 XP</div>
+                    </div>
+                </div>
+
+                <div class="mission-card" onclick="window.app.startDetective(0)">
+                    <div class="mission-icon-wrap" style="background:rgba(245,158,11,0.2);">🕵️‍♂️</div>
+                    <div class="mission-info">
+                        <div class="mission-title">2. Procedure Detective</div>
+                        <div class="mission-desc">Temukan kesalahan tersembunyi pada dokumen SOP</div>
+                        <div class="mission-xp-tag">⚡ +120 - 140 XP</div>
+                    </div>
+                </div>
+
+                <div class="mission-card" onclick="window.app.startWordHunter(0)">
+                    <div class="mission-icon-wrap" style="background:rgba(16,185,129,0.2);">🎯</div>
+                    <div class="mission-info">
+                        <div class="mission-title">3. Word Hunter</div>
+                        <div class="mission-desc">Tangkap kata imperatif & konjungsi dengan sistem nyawa</div>
+                        <div class="mission-xp-tag">⚡ +120 XP • ❤️❤️❤️</div>
+                    </div>
+                </div>
+
+                <div class="mission-card" onclick="window.app.startBossBattle()">
+                    <div class="mission-icon-wrap" style="background:rgba(239,68,68,0.2);">⚔️</div>
+                    <div class="mission-info">
+                        <div class="mission-title">4. Procedure Boss Battle</div>
+                        <div class="mission-desc">Pertarungan epik melawan Dr. Chaos (The Disorder Lord)</div>
+                        <div class="mission-xp-tag">⚡ +500 XP • Final Boss</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ======================================================= -->
+        <!-- SCREEN 5: GAME 1 - STEP SORTER                          -->
+        <!-- ======================================================= -->
+        <section id="screen-game-sorter" class="screen">
+            <div class="game-top-bar">
+                <span style="font-size:0.8rem; font-weight:800; color:#818cf8;">🧩 GAME 1: STEP SORTER</span>
+                <button class="icon-btn" onclick="window.app.showScreen('games-hub')">✕</button>
+            </div>
+
+            <div class="game-card">
+                <h4 id="sorter-scenario-title" style="margin-bottom:6px;">Skenario Prosedur</h4>
+                <p id="sorter-hint-text" style="font-size:0.78rem; color:#38bdf8; margin-bottom:12px;"></p>
+
+                <div class="sortable-list" id="sorter-items-list">
+                    <!-- Dynamic Sort Items -->
+                </div>
+
+                <button class="btn-primary" onclick="window.app.checkSorterOrder()">
+                    ✓ Periksa Urutan Langkah
+                </button>
+
+                <div id="sorter-feedback-box" class="game-card" style="display:none; margin-top:12px; padding:12px;"></div>
+            </div>
+        </section>
+
+        <!-- ======================================================= -->
+        <!-- SCREEN 6: GAME 2 - PROCEDURE DETECTIVE                  -->
+        <!-- ======================================================= -->
+        <section id="screen-game-detective" class="screen">
+            <div class="game-top-bar">
+                <span style="font-size:0.8rem; font-weight:800; color:#fbbf24;">🕵️‍♂️ GAME 2: PROCEDURE DETECTIVE</span>
+                <button class="icon-btn" onclick="window.app.showScreen('games-hub')">✕</button>
+            </div>
+
+            <div class="game-card">
+                <h4 id="detective-case-title" style="margin-bottom:6px;">Kasus Investigasi</h4>
+                <p style="font-size:0.78rem; color:var(--text-muted); margin-bottom:12px;">
+                    Sentuh salah satu langkah di bawah ini yang menurutmu memuat <strong>kesalahan logika, takaran, atau kebahasaan</strong>!
+                </p>
+
+                <div id="detective-snippets-container">
+                    <!-- Dynamic Snippet Cards -->
+                </div>
+
+                <div id="detective-report-box" class="game-card" style="display:none; margin-top:12px; padding:12px;"></div>
+            </div>
+        </section>
+
+        <!-- ======================================================= -->
+        <!-- SCREEN 7: GAME 3 - WORD HUNTER                          -->
+        <!-- ======================================================= -->
+        <section id="screen-game-hunter" class="screen">
+            <div class="game-top-bar">
+                <div class="hearts-container" id="hunter-hearts-box">
+                    <span>❤️</span><span>❤️</span><span>❤️</span>
+                </div>
+                <span id="hunter-counter" style="font-size:0.8rem; font-weight:800; color:#34d399;">Ditemukan: 0 / 3</span>
+                <button class="icon-btn" onclick="window.app.showScreen('games-hub')">✕</button>
+            </div>
+
+            <div class="game-card">
+                <h4 style="color:#ffffff; margin-bottom:4px;">🎯 Misi Perburuan Kata</h4>
+                <p id="hunter-instruction" style="font-size:0.82rem; color:#fbbf24; font-weight:700; margin-bottom:12px;"></p>
+
+                <div class="token-stream-box" id="hunter-tokens-container">
+                    <!-- Dynamic Word Chips -->
+                </div>
+
+                <div id="hunter-game-over-box" class="game-card" style="display:none; text-align:center; padding:14px; background:rgba(239,68,68,0.15); border-color:#ef4444;"></div>
+            </div>
+        </section>
+
+        <!-- ======================================================= -->
+        <!-- SCREEN 8: GAME 4 - BOSS BATTLE                          -->
+        <!-- ======================================================= -->
+        <section id="screen-game-boss" class="screen">
+            <div class="game-top-bar">
+                <span style="font-size:0.8rem; font-weight:800; color:#f43f5e;">⚔️ FINAL BOSS BATTLE</span>
+                <button class="icon-btn" onclick="window.app.showScreen('games-hub')">✕</button>
+            </div>
+
+            <div class="boss-arena">
+                <div class="boss-avatar-frame" id="boss-avatar-frame">🦹‍♂️</div>
+                <h3 style="color:#f87171; font-size:1.1rem;">Dr. Chaos</h3>
+                <div style="font-size:0.7rem; color:#fca5a5; margin-bottom:6px;">The Disorder Lord</div>
+
+                <!-- Boss HP -->
+                <div class="hp-bar-wrapper">
+                    <div style="display:flex; justify-content:space-between; font-size:0.72rem; font-weight:700; margin-bottom:2px;">
+                        <span style="color:#f87171;">HP Dr. Chaos</span>
+                        <span id="boss-hp-text" style="color:#fca5a5;">HP: 100 / 100</span>
+                    </div>
+                    <div class="hp-bar-bg">
+                        <div class="hp-bar-fill-boss" id="boss-hp-fill" style="width:100%;"></div>
+                    </div>
+                </div>
+
+                <!-- Player HP -->
+                <div class="hp-bar-wrapper" style="margin-bottom:10px;">
+                    <div style="display:flex; justify-content:space-between; font-size:0.72rem; font-weight:700; margin-bottom:2px;">
+                        <span style="color:#34d399;">HP Pejuang Prosedur</span>
+                        <span id="player-hp-text" style="color:#86efac;">HP: 100 / 100</span>
+                    </div>
+                    <div class="hp-bar-bg">
+                        <div class="hp-bar-fill-player" id="player-hp-fill" style="width:100%;"></div>
+                    </div>
+                </div>
+
+                <div class="boss-dialogue-cloud" id="boss-speech-text">
+                    "Hahaha! Seluruh SOP telah kuhancurkan!"
+                </div>
+            </div>
+
+            <div class="game-card">
+                <div style="font-size:0.72rem; font-weight:800; color:#c084fc; text-transform:uppercase;" id="boss-phase-title">Fase 1</div>
+                <h4 id="boss-question-text" style="font-size:0.9rem; margin:6px 0 12px;">Pilihan Taktis Prosedur</h4>
+
+                <div id="boss-options-grid">
+                    <!-- Dynamic Battle Options -->
+                </div>
+
+                <div id="boss-feedback-box" class="game-card" style="display:none; padding:12px; margin-top:10px;"></div>
+            </div>
+        </section>
+
+        <!-- ======================================================= -->
+        <!-- SCREEN 9: QUIZ EVALUASI                                 -->
+        <!-- ======================================================= -->
+        <section id="screen-quiz" class="screen">
+            <div class="quiz-header-bar">
+                <span id="quiz-category-tag" class="materi-card-badge" style="margin:0;">Kategori Soal</span>
+                <span id="quiz-progress-text" style="color:#a5b4fc;">Soal 1 dari 20</span>
+            </div>
+
+            <div class="xp-bar-bg" style="height:6px; margin-bottom:14px;">
+                <div class="xp-bar-fill" id="quiz-progress-bar" style="width:5%;"></div>
+            </div>
+
+            <div class="quiz-question-box" id="quiz-question-text">
+                Pertanyaan kuis akan dimuat di sini...
+            </div>
+
+            <div class="quiz-options-grid" id="quiz-options-container">
+                <!-- Dynamic 4 Options (A, B, C, D) -->
+            </div>
+
+            <div class="quiz-explanation-card" id="quiz-explanation-box" style="display:none;">
+                <!-- Explanation text -->
+            </div>
+
+            <button class="btn-primary" id="btn-quiz-next" style="display:none;" onclick="window.app.nextQuizQuestion()">
+                Lanjut ke Soal Berikutnya ➜
             </button>
+        </section>
 
-            <!-- Custom Email / Manual Google Mock -->
-            <div class="auth-divider"><span>atau masukkan akun Google</span></div>
-            <div class="custom-input-group">
-              <input type="email" id="input-google-email" placeholder="nama@gmail.com" class="text-input">
-              <button id="btn-custom-google-login" class="btn btn-primary btn-sm">Daftar / Masuk</button>
-            </div>
-          </div>
-        </div>
+        <!-- ======================================================= -->
+        <!-- SCREEN 10: FINAL RESULT & CERTIFICATE                   -->
+        <!-- ======================================================= -->
+        <section id="screen-result" class="screen">
+            <div class="certificate-card">
+                <div class="cert-stamp" id="res-stamp">GRADE A+</div>
+                <div style="font-size:2.8rem; margin-bottom:4px;">🏆</div>
+                <h2 style="font-size:1.3rem; color:#f59e0b; letter-spacing:1px;">SERTIFIKAT KELULUSAN</h2>
+                <div style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase;">Procedure Master Achievement</div>
 
-        <!-- When Logged In: Profile & Cloud Sync View -->
-        <div id="auth-view-user" class="auth-view hidden">
-          <div class="profile-card-large">
-            <div class="avatar-large" id="modal-avatar-large">👤</div>
-            <h3 id="modal-user-name">Gungde Dwi</h3>
-            <span id="modal-user-email" class="email-sub">gungdedwi@gmail.com</span>
-            <div class="sync-badge">
-              <span class="dot-green"></span> Terhubung ke Google Cloud
-            </div>
-          </div>
+                <div class="cert-student-name" id="res-student-name">Nama Siswa</div>
+                <p style="font-size:0.8rem; color:#e2e8f0; max-width:360px; margin:0 auto;">
+                    Dinyatakan telah berhasil menuntaskan seluruh tantangan, mini games, dan kuis evaluasi <strong>Teks Prosedur Kelas IX SMP</strong> dengan predikat:
+                </p>
+                <div style="font-size:1.15rem; font-weight:800; color:#34d399; margin:8px 0;" id="res-grade">A+ (Istimewa)</div>
 
-          <div class="stats-overview">
-            <div class="overview-box">
-              <span class="box-label">Level Terbuka</span>
-              <strong id="modal-stat-level" class="box-val">1</strong>
-            </div>
-            <div class="overview-box">
-              <span class="box-label">Koin</span>
-              <strong id="modal-stat-coins" class="box-val">100</strong>
-            </div>
-            <div class="overview-box">
-              <span class="box-label">Hint</span>
-              <strong id="modal-stat-hints" class="box-val">3</strong>
-            </div>
-          </div>
+                <div class="cert-meta-grid">
+                    <div class="cert-meta-box">
+                        <div style="color:var(--text-muted); font-size:0.7rem;">Total Perolehan XP</div>
+                        <strong style="color:#fbbf24; font-size:1rem;" id="res-total-xp">2.450 XP</strong>
+                    </div>
+                    <div class="cert-meta-box">
+                        <div style="color:var(--text-muted); font-size:0.7rem;">Akurasi Jawaban</div>
+                        <strong style="color:#38bdf8; font-size:1rem;" id="res-accuracy">95%</strong>
+                    </div>
+                    <div class="cert-meta-box">
+                        <div style="color:var(--text-muted); font-size:0.7rem;">Misi Dituntaskan</div>
+                        <strong style="color:#a78bfa; font-size:0.9rem;" id="res-missions-done">9 Misi Selesai</strong>
+                    </div>
+                    <div class="cert-meta-box">
+                        <div style="color:var(--text-muted); font-size:0.7rem;">Trophy & Badges</div>
+                        <strong style="color:#f472b6; font-size:0.9rem;" id="res-badges-count">7 Badges</strong>
+                    </div>
+                </div>
 
-          <div class="modal-actions">
-            <button id="btn-sync-now" class="btn btn-primary">
-              🔄 Sinkronkan Cloud Sekarang
+                <div class="cert-teacher-sig">
+                    <div>Mengetahui,</div>
+                    <div style="font-weight:700; color:#ffffff; margin-top:2px;">Bahaudin Alfiansyah Syafi'i, S.Pd.</div>
+                    <div>NIPPPK: 199702042025211039 • Guru Pengampu Bahasa Indonesia</div>
+                </div>
+            </div>
+
+            <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:20px;">
+                <button class="btn-primary" onclick="window.app.printCertificate()">
+                    🖨️ Cetak / Simpan Sertifikat Hasil Belajar (PDF)
+                </button>
+                <button class="btn-secondary" onclick="window.app.showScreen('dashboard')">
+                    🏠 Kembali ke Dashboard Siswa
+                </button>
+                <button class="btn-secondary" onclick="window.app.startQuiz()">
+                    🔄 Ulangi Kuis Evaluasi (Tingkatkan Akurasi)
+                </button>
+            </div>
+        </section>
+
+        <!-- ======================================================= -->
+        <!-- SCREEN 11: PROFILE & STATS                              -->
+        <!-- ======================================================= -->
+        <section id="screen-profile" class="screen">
+            <div class="student-profile-header">
+                <div class="profile-avatar-wrap">👑</div>
+                <div class="profile-meta">
+                    <div class="student-display-name bind-student-name">Siswa Pejuang</div>
+                    <div class="level-badge-tag bind-level-title">Lv.1 — Procedure Rookie</div>
+                </div>
+            </div>
+
+            <div class="game-card">
+                <h4 style="margin-bottom:10px; color:#ffffff;">📊 Ringkasan Capaian Belajar</h4>
+                <div style="font-size:0.84rem; line-height:1.8; color:var(--text-muted);">
+                    <div>• Total Pengalaman: <strong class="bind-xp" style="color:#fbbf24;">0 XP</strong></div>
+                    <div>• Gelar Kompetensi: <strong class="bind-level-title" style="color:#818cf8;">Rookie</strong></div>
+                    <div>• Akurasi Menjawab: <strong class="bind-accuracy" style="color:#34d399;">100%</strong></div>
+                    <div>• Misi Selesai: <strong class="bind-missions-count" style="color:#38bdf8;">0</strong></div>
+                </div>
+            </div>
+
+            <div class="game-card">
+                <h4 style="margin-bottom:10px; color:#ffffff;">🏷️ Tingkatan Level Prosedur</h4>
+                <div style="font-size:0.78rem; line-height:1.6; color:var(--text-muted);">
+                    <div>🌱 <strong>Level 1 — Procedure Rookie</strong> (0 - 300 XP)</div>
+                    <div>🧭 <strong>Level 2 — Step Explorer</strong> (301 - 800 XP)</div>
+                    <div>🔍 <strong>Level 3 — Procedure Analyst</strong> (801 - 1.500 XP)</div>
+                    <div>⚡ <strong>Level 4 — Procedure Expert</strong> (1.501 - 2.300 XP)</div>
+                    <div>👑 <strong>Level 5 — Procedure Master</strong> (2.301+ XP)</div>
+                </div>
+            </div>
+
+            <button class="btn-danger" style="width:100%; margin-top:10px;" onclick="window.app.resetStudentProgress()">
+                🔄 Ganti Nama / Reset Data Belajar
             </button>
-            <button id="btn-switch-account" class="btn btn-secondary">
-              Ganti Akun Google
+        </section>
+
+        <!-- ======================================================= -->
+        <!-- BOTTOM NAVIGATION BAR                                   -->
+        <!-- ======================================================= -->
+        <nav class="bottom-nav">
+            <button class="nav-item active" data-screen="dashboard">
+                <span class="nav-icon">🏠</span>
+                <span>Home</span>
             </button>
-            <button id="btn-google-logout" class="btn btn-danger-outline">
-              Keluar (Logout)
+            <button class="nav-item" data-screen="materi">
+                <span class="nav-icon">📚</span>
+                <span>Materi</span>
             </button>
-          </div>
+            <button class="nav-item" data-screen="games">
+                <span class="nav-icon">🎮</span>
+                <span>Games</span>
+            </button>
+            <button class="nav-item" data-screen="quiz">
+                <span class="nav-icon">🎓</span>
+                <span>Kuis</span>
+            </button>
+            <button class="nav-item" data-screen="profile">
+                <span class="nav-icon">👤</span>
+                <span>Profil</span>
+            </button>
+        </nav>
+
+        <!-- ======================================================= -->
+        <!-- MODALS                                                  -->
+        <!-- ======================================================= -->
+        <!-- Modal Level Up -->
+        <div id="modal-level-up" class="modal-overlay">
+            <div class="modal-content" style="text-align:center;">
+                <div style="font-size:4rem; margin-bottom:8px;">🌟</div>
+                <h3 id="levelup-title" style="color:#fbbf24; margin-bottom:4px;">LEVEL UP!</h3>
+                <p id="levelup-subtitle" style="font-size:0.85rem; color:var(--text-muted); margin-bottom:16px;"></p>
+                <button class="btn-primary modal-close-btn">LANJUTKAN ➜</button>
+            </div>
         </div>
 
-        <button id="btn-close-auth" class="btn-close-x" title="Tutup">✕</button>
-      </div>
+        <!-- Modal Badge Unlocked -->
+        <div id="modal-badge-unlocked" class="modal-overlay">
+            <div class="modal-content badge-unlock-modal">
+                <div class="badge-unlock-icon" id="unlocked-badge-icon">🏆</div>
+                <div style="font-size:0.75rem; font-weight:800; color:#fbbf24; text-transform:uppercase; margin-top:6px;">BADGE TERBUKA!</div>
+                <h3 id="unlocked-badge-name" style="color:#ffffff; margin:4px 0 8px;">Master of Flow</h3>
+                <p id="unlocked-badge-desc" style="font-size:0.82rem; color:var(--text-muted); margin-bottom:16px;"></p>
+                <button class="btn-primary modal-close-btn">HEBAT! KLAIM BADGE ➜</button>
+            </div>
+        </div>
+
+        <!-- Generic Custom Modal -->
+        <div id="modal-custom" class="modal-overlay">
+            <div class="modal-content">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                    <h3 id="modal-custom-title" style="font-size:1.1rem; color:#ffffff;">Detail</h3>
+                    <button class="icon-btn modal-close-btn">✕</button>
+                </div>
+                <div id="modal-custom-body"></div>
+            </div>
+        </div>
     </div>
 
-    <!-- Modal: Hint Dialog -->
-    <div id="modal-hint" class="modal-backdrop hidden">
-      <div class="modal-card glass-card pop-anim">
-        <div class="modal-header">
-          <img src="assets/images/hint_bulb.svg" alt="Hint Bulb" class="modal-icon">
-          <h3>Bantuan &amp; Petunjuk</h3>
-        </div>
-        <div class="modal-body">
-          <p id="hint-text-content" class="hint-text">Gunakan 1 Hint untuk melihat solusi atau trik level ini.</p>
-        </div>
-        <div class="modal-actions">
-          <button id="btn-use-hint" class="btn btn-primary">
-            Gunakan Hint (<span id="hint-available-val">1</span> Sisa)
-          </button>
-          <button id="btn-watch-ad-hint" class="btn btn-accent">
-            📺 Nonton Iklan (+1 Hint)
-          </button>
-          <button id="btn-close-hint" class="btn btn-secondary">Tutup</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Modal: Rewarded Video Ad Simulation -->
-    <div id="modal-rewarded-ad" class="modal-backdrop hidden">
-      <div class="modal-card glass-card pop-anim ad-modal">
-        <div class="ad-video-mockup">
-          <div class="ad-video-header">
-            <span class="ad-tag">AdMob Rewarded Video</span>
-            <span id="ad-timer" class="ad-countdown">5 detik</span>
-          </div>
-          <div class="ad-video-body">
-            <div class="ad-spinner"></div>
-            <h4>Menampilkan Iklan Video Sponsor...</h4>
-            <p>Hadiah 1 Petunjuk Gratis akan diberikan setelah countdown selesai.</p>
-          </div>
-          <div class="ad-progress-bar">
-            <div id="ad-progress-fill" class="ad-progress-fill"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Modal: Level Victory / Sukses -->
-    <div id="modal-victory" class="modal-backdrop hidden">
-      <div class="modal-card glass-card pop-anim victory-modal">
-        <div class="victory-header">
-          <div class="confetti-icon">🎉</div>
-          <h2>HEBAT! JAWABAN BENAR!</h2>
-        </div>
-        <div class="modal-body">
-          <p id="victory-explanation" class="victory-text">Penjelasan trik logika teka-teki...</p>
-          <div class="reward-pill">
-            <span>Hadiah:</span>
-            <img src="assets/images/coin.svg" alt="Coin" class="stat-icon">
-            <strong id="victory-reward-coins">+25 Koin</strong>
-          </div>
-        </div>
-        <div class="modal-actions">
-          <button id="btn-next-level" class="btn btn-primary btn-large glow-effect">
-            LEVEL BERIKUTNYA ➔
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Modal: Settings -->
-    <div id="modal-settings" class="modal-backdrop hidden">
-      <div class="modal-card glass-card pop-anim">
-        <div class="modal-header">
-          <h3>Pengaturan Game</h3>
-        </div>
-        <div class="modal-body settings-list">
-          <div class="setting-item">
-            <span>Efek Suara (SFX)</span>
-            <label class="switch">
-              <input type="checkbox" id="toggle-sfx" checked>
-              <span class="slider"></span>
-            </label>
-          </div>
-          <div class="setting-item">
-            <span>Google Cloud Sync</span>
-            <label class="switch">
-              <input type="checkbox" id="toggle-cloud-sync" checked>
-              <span class="slider"></span>
-            </label>
-          </div>
-          <div class="setting-item">
-            <span>Simulasi AdMob</span>
-            <label class="switch">
-              <input type="checkbox" id="toggle-admob" checked>
-              <span class="slider"></span>
-            </label>
-          </div>
-          <div class="setting-item danger-row">
-            <span>Reset Seluruh Progres</span>
-            <button id="btn-reset-data" class="btn-danger-sm">Reset</button>
-          </div>
-        </div>
-        <div class="modal-actions">
-          <button id="btn-close-settings" class="btn btn-secondary">Tutup</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Toast Notification -->
-    <div id="game-toast" class="game-toast hidden">
-      <span id="toast-message">Notifikasi</span>
-    </div>
-
-  </div>
-
-  <script src="game.js"></script>
+    <!-- Application Scripts -->
+    <script src="js/audio.js"></script>
+    <script src="js/data.js"></script>
+    <script src="js/game.js"></script>
 </body>
 </html>
